@@ -1,41 +1,68 @@
-.386
-.model flat,stdcall
-.stack 4096
-ExitProcess PROTO, dwExitCode:DWORD
+WriteInt64 PROTO
+ReadInt64 PROTO
+WriteString PROTO
+Crlf PROTO 
+
+extrn ExitProcess: PROC
 
 .data
-array DWORD 10,20,30,40
-arrayType DWORD TYPE array
-newArray DWORD LENGTHOF array DUP(?)
-lastElement DWORD ?
-
+array QWORD 10,20,30,40,50,60,70,80
+arrayLength QWORD 8
+arrayMaxElement QWORD 7
+count QWORD 0
+pressEnter BYTE "Press Enter to Continue",0
 .code
-main PROC
-   
-    ;Get first element address in ESI
-    MOV ESI, OFFSET array
-
-    ;Get address of next element in EDI
-    MOV EDI, OFFSET newArray
-    ADD EDI, TYPE newArray
-
-    ;set loop count into ecx
-    mov ECX, LENGTHOF array
-
+main proc
+	
+mov rcx, arrayLength
+mov rsi, 0
+L1:
+	mov rax, array[rsi * 8]
+	call WriteInt64
+	inc rsi
+loop L1
+call crlf
+	
+mov rcx, arrayMaxElement
+BubbleSort:
+mov count, rcx
+mov rcx, arrayMaxElement
+mov rsi, 0
 L2:
-    MOV EAX, [ESI]
-    MOV [EDI], EAX
+	mov r12, rsi 
+	imul r12,8
+	mov r14, array[r12]
+	mov r15, array[r12+8]
+	mov array[r12], r15
+	mov array[r12+8], r14
+	inc rsi
+loop L2
 
-    ADD ESI, TYPE array
-    ADD EDI, TYPE array
+mov rcx, arrayLength
+mov rsi, 0
+L3:
+	mov rax, array[rsi * 8]
+	call WriteInt64
+	inc rsi
+loop L3
+call Crlf
 
-    LOOP L2
+mov rcx, count
+loop BubbleSort
 
-    ;set last element from array in newArray first position
-    MOV EDI,OFFSET newArray
-    MOV EAX, [ESI]
-    MOV [EDI], EAX
+	EndProgram:
+		call pressEnterToContinue
 
-INVOKE ExitProcess,0
-main ENDP
-END main
+    call ExitProcess
+
+main endp
+
+pressEnterToContinue proc
+	call Crlf
+	mov rdx, OFFSET pressEnter
+	call WriteString
+	call ReadInt64
+	ret
+pressEnterToContinue endp
+
+end
